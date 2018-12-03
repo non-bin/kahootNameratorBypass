@@ -1,6 +1,4 @@
-// browser.runtime.onMessage.addListener(injectName);
-
-function injectName() {
+function requestName() {
     var inputName = prompt("Enter a name to inject");
 
     if (inputName == null || inputName == "") {
@@ -9,3 +7,5 @@ function injectName() {
 
     browser.runtime.sendMessage({name: inputName});
 }
+
+browser.runtime.onMessage.addListener(requestName);

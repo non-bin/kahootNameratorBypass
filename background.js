@@ -1,111 +1,44 @@
-/*
-DELAY is set to 6 seconds in this example. Such a short period is chosen to make
-the extension's behavior more obvious, but this is not recommended in real life.
-Note that in Chrome, alarms cannot be set for less than a minute. In Chrome:
-* if you install this extension "unpacked", you'll see a warning
-in the console, but the alarm will still go off after 6 seconds
-* if you package the extension and install it, then the alarm will go off after
-a minute.
-*/
-var DELAY = 0.1;
-var CATGIFS = "http://chilloutandwatchsomecatgifs.com/";
+name = 'Something\'s Wrong';
 
-/*
-Restart alarm for the currently active tab, whenever background.js is run.
-*/
-var gettingActiveTab = browser.tabs.query({active: true, currentWindow: true});
-gettingActiveTab.then((tabs) => {
-  restartAlarm(tabs[0].id);
-});
+browser.runtime.onMessage.addListener(nameRequested);
 
-/*
-Restart alarm for the currently active tab, whenever the user navigates.
-*/
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (!changeInfo.url) {
-    return;
-  }
-  var gettingActiveTab = browser.tabs.query({active: true, currentWindow: true});
-  gettingActiveTab.then((tabs) => {
-    if (tabId == tabs[0].id) {
-      restartAlarm(tabId);
-    }
-  });
-});
-
-/*
-Restart alarm for the currently active tab, whenever a new tab becomes active.
-*/
-browser.tabs.onActivated.addListener((activeInfo) => {
-  restartAlarm(activeInfo.tabId);
-});
-
-/*
-restartAlarm: clear all alarms,
-then set a new alarm for the given tab.
-*/
-function restartAlarm(tabId) {
-  browser.pageAction.hide(tabId);
-  browser.alarms.clearAll();
-  var gettingTab = browser.tabs.get(tabId);
-  gettingTab.then((tab) => {
-    if (tab.url != CATGIFS) {
-      browser.alarms.create("", {delayInMinutes: DELAY});
-    }
-  });
+function nameRequested(message) {
+    name = message.name;
 }
 
-/*
-On alarm, show the page action.
-*/
-browser.alarms.onAlarm.addListener((alarm) => {
-  var gettingActiveTab = browser.tabs.query({active: true, currentWindow: true});
-  gettingActiveTab.then((tabs) => {
-    browser.pageAction.show(tabs[0].id);
-  });
-});
+function injectListener(details) {
+    let filter = browser.webRequest.filterResponseData(details.requestId);
+    let decoder = new TextDecoder('utf-8');
+    let encoder = new TextEncoder();
+    console.log('AAAAAAAAAAHHHHHHHHHHH request detected');
 
-/*
-On page action click, navigate the corresponding tab to the cat gifs.
-*/
-browser.pageAction.onClicked.addListener(() => {
-  browser.tabs.update({url: CATGIFS});
-});
+    filter.ondata = event => {
+        filter.write(encoder.encode('{"name":"' + name + '"}'));
+        console.log('AAAAAAAAAAHHHHHHHHHHH name injected');
+        filter.disconnect();
+    }
 
+    return {};
+}
 
+function nameratorCheckListener(details) {
+    let filter = browser.webRequest.filterResponseData(details.requestId);
+    let decoder = new TextDecoder('utf-8');
+    let encoder = new TextEncoder();
 
-// name = 'Something\'s Wrong';
+    filter.ondata = event => {
+        let str = decoder.decode(event.data, {stream: true});
 
-// browser.pageAction.onClicked.addListener(onPageAction);
+        if (str.includes('"namerator":true,')) {
+            browser.tabs.sendMessage(details.tabId, 'requestName');
+        }
 
-// function onPageAction() {
-//     console.log('AAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHHHHHHH');
-//     browser.runtime.sendMessage('gimme name');
-// };
+        filter.write(encoder.encode(str));
+        filter.disconnect();
+    }
 
-// // browser.runtime.onMessage.addListener(nameRequested);
+    return {};
+}
 
-// function nameRequested() {
-//     name = message.name;
-// }
-
-// function listener(details) {
-//     let filter = browser.webRequest.filterResponseData(details.requestId);
-//     let decoder = new TextDecoder('utf-8');
-//     let encoder = new TextEncoder();
-
-//     filter.ondata = event => {
-//         filter.write(encoder.encode('{"name":"' + name + '"}'));
-//         filter.disconnect();
-//     }
-
-//     console.log(filter);
-
-//     return {};
-// }
-
-// browser.webRequest.onBeforeRequest.addListener(
-//     listener,
-//     {urls: ['https://apis.kahoot.it/namerator/*']},
-//     ['blocking']
-//     );
+browser.webRequest.onBeforeRequest.addListener(nameratorCheckListener, {urls: ['https://kahoot.it/reserve/session/*']}, ['blocking']);
+browser.webRequest.onBeforeRequest.addListener(injectListener, {urls: ['https://apis.kahoot.it/namerator/*']}, ['blocking']);
