@@ -1,0 +1,32 @@
+{
+    "description": "Set a custom name even if the name generator is on",
+    "manifest_version": 2,
+    "name": "kahootHack",
+    "version": "1.0",
+
+    "permissions": [
+        "alarms",
+        "tabs",
+        "webRequest",
+        "webRequestBlocking",
+        "https://kahoot.it/*",
+        "https://apis.kahoot.it/namerator/*"
+    ],
+
+    "background": {
+        "scripts": ["background.js"]
+    },
+
+    "page_action": {
+        "browser_style": true,
+        "default_icon": "icon.png",
+        "default_title": "Inject Name"
+    },
+
+    "applications": {
+        "gecko": {
+            "strict_min_version": "57.0a1",
+            "id": "jacka.alice@gmail.com"
+        }
+    }
+}
