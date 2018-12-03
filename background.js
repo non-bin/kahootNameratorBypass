@@ -10,11 +10,10 @@ function injectListener(details) {
     let filter = browser.webRequest.filterResponseData(details.requestId);
     let decoder = new TextDecoder('utf-8');
     let encoder = new TextEncoder();
-    console.log('AAAAAAAAAAHHHHHHHHHHH request detected');
+
 
     filter.ondata = event => {
         filter.write(encoder.encode('{"name":"' + name + '"}'));
-        console.log('AAAAAAAAAAHHHHHHHHHHH name injected');
         filter.disconnect();
     }
 
