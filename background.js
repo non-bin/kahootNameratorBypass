@@ -11,7 +11,6 @@ function injectListener(details) {
     let decoder = new TextDecoder('utf-8');
     let encoder = new TextEncoder();
 
-
     filter.ondata = event => {
         filter.write(encoder.encode('{"name":"' + name + '"}'));
         filter.disconnect();
